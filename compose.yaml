@@ -1,0 +1,35 @@
+services:
+  mullvad:
+    image: stratust/mullvad-vpn:latest
+    container_name: mullvad
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - MULLVAD_ACCOUNT=4338263704367634
+      - MULLVAD_LOCATION=br sao
+      - MULLVAD_ANTICENSORSHIP_MODE=udp2tcp
+      - MULLVAD_WIREGUARD_PORT=443
+    ports:
+      - 8282:8080/tcp  # qbittorrent Web UI
+      - 6881:6881/tcp
+      - 6881:6881/udp
+    restart: unless-stopped
+
+  qbittorrent:
+    image: ghcr.io/hotio/qbittorrent
+    container_name: qbittorrent_mullvad
+    depends_on:
+      - mullvad
+    network_mode: service:mullvad
+    environment:
+      - PUID=568
+      - PGID=568
+      - UMASK=002
+      - TZ=America/New_York
+    volumes:
+      - /mnt/VOLUME1/configs/qbittorrent/config:/config
+      - /mnt/VOLUME1/media:/media
+    restart: unless-stopped
+networks: {}
