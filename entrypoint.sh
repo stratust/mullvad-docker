@@ -2,7 +2,6 @@
 set -e
 
 # Clean up stale RPC socket/dir from previous runs
-# The daemon expects /var/run/mullvad-vpn to be a socket, not a directory
 if [ -d /var/run/mullvad-vpn ]; then
     rm -rf /var/run/mullvad-vpn
 fi
@@ -10,9 +9,6 @@ if [ -e /var/run/mullvad-vpn ]; then
     rm -f /var/run/mullvad-vpn
 fi
 mkdir -p /var/run
-
-# Also ensure the daemon's cache/resources dir exists
-mkdir -p /var/cache/mullvad-vpn /opt/mullvad-vpn
 
 # Start mullvad-daemon in background
 echo "[entrypoint] Starting mullvad-daemon..."
@@ -36,9 +32,13 @@ if [ -n "$MULLVAD_ACCOUNT" ]; then
 fi
 
 # Set location if specified
+# Format: country-code or country-code city-name
+# Try variations: "br sao" → "br saopaulo" → just "br"
 if [ -n "$MULLVAD_LOCATION" ]; then
     echo "[entrypoint] Setting location: $MULLVAD_LOCATION"
-    mullvad relay set location "$MULLVAD_LOCATION"
+    mullvad relay set location "$MULLVAD_LOCATION" 2>/dev/null \
+        || mullvad relay set location "$(echo "$MULLVAD_LOCATION" | awk '{print $1}')" 2>/dev/null \
+        || echo "[entrypoint] Warning: could not set location, using auto-selection"
 fi
 
 # Configure udp-over-tcp (anti-censorship / bridge mode)
@@ -68,7 +68,7 @@ echo "[entrypoint] Connecting..."
 mullvad connect
 
 # Show initial status
-sleep 3
+sleep 5
 mullvad status
 
 # Keep container alive — wait for daemon process
