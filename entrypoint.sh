@@ -1,10 +1,20 @@
 #!/bin/bash
 set -e
 
-# Create runtime dir for the daemon RPC socket
-mkdir -p /var/run/mullvad-vpn /var/log
+# Clean up stale RPC socket/dir from previous runs
+# The daemon expects /var/run/mullvad-vpn to be a socket, not a directory
+if [ -d /var/run/mullvad-vpn ]; then
+    rm -rf /var/run/mullvad-vpn
+fi
+if [ -e /var/run/mullvad-vpn ]; then
+    rm -f /var/run/mullvad-vpn
+fi
+mkdir -p /var/run
 
-# Start mullvad-daemon in background (no --launch-subprocesses flag in 2026.3)
+# Also ensure the daemon's cache/resources dir exists
+mkdir -p /var/cache/mullvad-vpn /opt/mullvad-vpn
+
+# Start mullvad-daemon in background
 echo "[entrypoint] Starting mullvad-daemon..."
 mullvad-daemon &
 DAEMON_PID=$!
@@ -34,9 +44,7 @@ fi
 # Configure udp-over-tcp (anti-censorship / bridge mode)
 if [ -n "$MULLVAD_ANTICENSORSHIP_MODE" ]; then
     echo "[entrypoint] Setting anti-censorship mode: $MULLVAD_ANTICENSORSHIP_MODE"
-    # Enable bridge (routes WireGuard UDP through a TCP proxy)
     mullvad bridge set state on 2>/dev/null || true
-    # Set the bridge protocol
     if [ "$MULLVAD_ANTICENSORSHIP_MODE" = "udp2tcp" ]; then
         mullvad bridge set tunnel-protocol udp-over-tcp 2>/dev/null || true
         if [ -n "$MULLVAD_WIREGUARD_PORT" ]; then

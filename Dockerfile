@@ -21,7 +21,9 @@ RUN chmod +x /entrypoint.sh
 # Mullvad daemon needs /dev/net/tun and NET_ADMIN
 # The daemon creates its own wg interface in userspace (wireguard-go)
 # but still needs cap NET_ADMIN for routing/firewall rules
-ENV MULLVAD_ACCOUNT="" \
+# Required: the daemon needs to know where its resources are (relays.json, ca.crt, etc.)
+ENV MULLVAD_RESOURCE_DIR="/opt/Mullvad VPN/resources/" \
+    MULLVAD_ACCOUNT="" \
     MULLVAD_LOCATION="" \
     MULLVAD_ANTICENSORSHIP_MODE="udp2tcp" \
     MULLVAD_WIREGUARD_PORT="443" \
