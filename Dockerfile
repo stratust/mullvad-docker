@@ -7,7 +7,7 @@ ARG DEB_URL=https://github.com/mullvad/mullvadvpn-app/releases/download/${MULLVA
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ca-certificates curl iproute2 iptables iputils-ping dnsutils \
-        libnl-3-200 libnl-genl-3-200 procps && \
+        libnl-3-200 libnl-genl-3-200 libdbus-1-3 procps && \
     curl -fsSL -o /tmp/mullvad.deb "${DEB_URL}" && \
     dpkg-deb -x /tmp/mullvad.deb / && \
     dpkg-deb --control /tmp/mullvad.deb /tmp/mullvad-control && \
