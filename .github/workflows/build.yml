@@ -20,9 +20,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/mullvad-vpn
-            ghcr.io/${{ github.repository_owner }}/mullvad-vpn
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/mullvad-vpn
           tags: |
             type=raw,value=latest
             type=sha,prefix={{date 'YYYY.MM.DD'}}-
@@ -36,13 +34,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
         uses: docker/build-push-action@v6
