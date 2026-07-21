@@ -32,4 +32,20 @@ services:
       - /mnt/VOLUME1/configs/qbittorrent/config:/config
       - /mnt/VOLUME1/media:/media
     restart: unless-stopped
+
+  newt:
+    image: fosrl/newt:latest
+    container_name: newt
+    depends_on:
+      - mullvad
+    network_mode: service:mullvad
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+      - NET_RAW
+    environment:
+      - PANGOLIN_ENDPOINT=https://pangolin.toliveiralab.com
+      - NEWT_ID=shhpkom7ok01h8a
+      - NEWT_SECRET=psyi4g...tx5p
+    restart: unless-stopped
 networks: {}
