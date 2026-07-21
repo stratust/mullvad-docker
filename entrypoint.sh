@@ -1,9 +1,12 @@
 #!/bin/bash
 set -e
 
-# Start mullvad-daemon in background
+# Create runtime dir for the daemon RPC socket
+mkdir -p /var/run/mullvad-vpn /var/log
+
+# Start mullvad-daemon in background (no --launch-subprocesses flag in 2026.3)
 echo "[entrypoint] Starting mullvad-daemon..."
-mullvad-daemon --launch-subprocesses &
+mullvad-daemon &
 DAEMON_PID=$!
 
 # Wait for daemon RPC socket to be available
@@ -28,18 +31,17 @@ if [ -n "$MULLVAD_LOCATION" ]; then
     mullvad relay set location "$MULLVAD_LOCATION"
 fi
 
-# Configure anti-censorship (udp-over-tcp by default)
+# Configure udp-over-tcp (anti-censorship / bridge mode)
 if [ -n "$MULLVAD_ANTICENSORSHIP_MODE" ]; then
     echo "[entrypoint] Setting anti-censorship mode: $MULLVAD_ANTICENSORSHIP_MODE"
-    
-    if [ "$MULLVAD_ANTICENSORSHIP_MODE" = "auto" ]; then
-        mullvad anti-censorship set mode auto 2>/dev/null || true
-    else
-        # Set the wireguard port for the obfuscation
+    # Enable bridge (routes WireGuard UDP through a TCP proxy)
+    mullvad bridge set state on 2>/dev/null || true
+    # Set the bridge protocol
+    if [ "$MULLVAD_ANTICENSORSHIP_MODE" = "udp2tcp" ]; then
+        mullvad bridge set tunnel-protocol udp-over-tcp 2>/dev/null || true
         if [ -n "$MULLVAD_WIREGUARD_PORT" ]; then
-            mullvad anti-censorship set wireguard-port --port "$MULLVAD_WIREGUARD_PORT" 2>/dev/null || true
+            mullvad bridge set udp-over-tcp-port --port "$MULLVAD_WIREGUARD_PORT" 2>/dev/null || true
         fi
-        mullvad anti-censorship set mode "$MULLVAD_ANTICENSORSHIP_MODE" 2>/dev/null || true
     fi
 fi
 
