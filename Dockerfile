@@ -9,7 +9,8 @@ RUN apt-get update && \
         ca-certificates curl iproute2 iptables iputils-ping dnsutils \
         libnl-3-200 libnl-genl-3-200 procps && \
     curl -fsSL -o /tmp/mullvad.deb "${DEB_URL}" && \
-    apt-get install -y --no-install-recommends /tmp/mullvad.deb && \
+    dpkg-deb -x /tmp/mullvad.deb / && \
+    dpkg-deb --control /tmp/mullvad.deb /tmp/mullvad-control && \
     rm /tmp/mullvad.deb && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
