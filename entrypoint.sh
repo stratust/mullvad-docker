@@ -59,6 +59,18 @@ fi
 if [ "$MULLVAD_ALLOW_LAN" = "true" ]; then
     echo "[entrypoint] Enabling local network sharing..."
     mullvad lan set allow 2>/dev/null || true
+
+    # Add static routes for local subnets via the Docker gateway
+    # The VPN policy routing captures all traffic; LAN routes must be
+    # explicitly added so the main table handles them before the tunnel.
+    GW=$(ip route show default | awk '/default/ {print $3; exit}')
+    if [ -n "$GW" ] && [ -n "$MULLVAD_LAN_SUBNETS" ]; then
+        echo "[entrypoint] Adding LAN routes via gateway $GW..."
+        for subnet in $MULLVAD_LAN_SUBNETS; do
+            ip route add "$subnet" via "$GW" dev eth0 2>/dev/null || true
+            echo "[entrypoint]   Route: $subnet via $GW"
+        done
+    fi
 fi
 
 # Always require VPN to prevent leaks
