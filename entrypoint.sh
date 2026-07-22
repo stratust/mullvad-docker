@@ -53,9 +53,12 @@ if [ -n "$MULLVAD_ANTICENSORSHIP_MODE" ]; then
     fi
 fi
 
-# Set LAN access if configured
+# Set LAN access if configured (allow local network sharing)
+# This is CRITICAL for containers using network_mode: service:mullvad
+# Without it, health checks to LAN services (Plex, Sonarr, etc.) fail.
 if [ "$MULLVAD_ALLOW_LAN" = "true" ]; then
-    mullvad settings set lan-connections allow 2>/dev/null || true
+    echo "[entrypoint] Enabling local network sharing..."
+    mullvad lan set allow 2>/dev/null || true
 fi
 
 # Always require VPN to prevent leaks
